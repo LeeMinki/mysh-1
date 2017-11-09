@@ -5,13 +5,16 @@
 #include "commands.h"
 #include "built_in.h"
 #include "utils.h"
+#include "signal_handlers.h"
 
 int main()
 {
   char buf[8096];
-  signal(SIGINT, (void *)catch_sigint);
-  signal(SIGSTP, (void *)catch_sigtstp);
+  
   while (1) {
+    signal(SIGTSTP, (void *)catch_sigtstp);
+    signal(SIGINT, (void *)catch_sigint);
+    
     fgets(buf, 8096, stdin);
     struct single_command commands[512];
     int n_commands = 0;

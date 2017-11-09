@@ -1,6 +1,5 @@
-#include "signal.h"
+#include "signal_handlers.h"
 #include <signal.h>
-
 
 void catch_sigint(int signalNo)
 {
@@ -10,6 +9,6 @@ void catch_sigint(int signalNo)
 
 void catch_sigtstp(int signalNo)
 {
-  if(signalNo == SIGSTP)
+  if(signalNo == SIGTSTP)
     signal(signalNo, SIG_IGN);
 }
