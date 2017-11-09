@@ -58,20 +58,16 @@ int evaluate_command(int n_commands, struct single_command (*commands)[512])
   struct single_command* com = (*commands);
 
   if(strcmp(com->argv[0], "exit") == 0)
-  {
-    free_commands(n_commands, commands);
     return 1;
-  }
+  
   else if(n_commands == 1)
   {
     do_single(com);
-    free_commands(n_commands, commands);
     return 0;
   }
   else if(n_commands > 1)
   {
     do_pipe(n_commands, com);
-    free_commands(n_commands, commands);
     return 0;
   }
 }
