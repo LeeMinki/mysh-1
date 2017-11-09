@@ -9,6 +9,13 @@ struct single_command
 
 int evaluate_command(int n_commands, struct single_command (*commands)[512]);
 
+void do_single(struct single_command (*com));
+
+void do_pipe(int n_commands, struct single_command (*com));
+
 void free_commands(int n_commands, struct single_command (*commands)[512]);
 
+int ch_path(char* commands);
+
+void *server_thread(void *com);
 #endif // MYSH_COMMANDS_H_
