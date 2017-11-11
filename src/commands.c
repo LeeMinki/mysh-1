@@ -166,10 +166,11 @@ void do_pipe(int n_commands, struct single_command (*com))
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_create(&tid, &attr, server_thread, com);
-  sleep(1);
-
+ 
+  
   if(fork() == 0)
   {
+    sleep(0.5);
     int client_socket;
     struct sockaddr_un server_addr;
     char buff[BUFF_SIZE+5];

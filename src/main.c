@@ -6,14 +6,16 @@
 #include "built_in.h"
 #include "utils.h"
 #include "signal_handlers.h"
+#include <setjmp.h>
 
 int main()
 {
+  
   char buf[8096];
+  signal(SIGINT, catch_sigint);
+  signal(SIGTSTP, catch_sigtstp);
   
   while (1) {
-    signal(SIGTSTP, (void *)catch_sigtstp);
-    signal(SIGINT, (void *)catch_sigint);
     
     fgets(buf, 8096, stdin);
     struct single_command commands[512];
