@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <string.h>
-
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <linux/limits.h>
-
+#include <wait.h>
 #include "built_in.h"
 
-int do_cd(int argc, char** argv) {
+int do_cd(int argc, char** argv, int* back) {
   if (!validate_cd_argv(argc, argv))
     return -1;
 
@@ -18,7 +18,7 @@ int do_cd(int argc, char** argv) {
   return 0;
 }
 
-int do_pwd(int argc, char** argv) {
+int do_pwd(int argc, char** argv, int* back) {
   if (!validate_pwd_argv(argc, argv))
     return -1;
 
@@ -32,11 +32,27 @@ int do_pwd(int argc, char** argv) {
   return 0;
 }
 
-int do_fg(int argc, char** argv) {
+int do_fg(int argc, char** argv, int* back) {
+  int status;
   if (!validate_fg_argv(argc, argv))
     return -1;
 
-  // TODO: Fill this.
+  signal(SIGTTOU, SIG_IGN);
+  if(tcsetpgrp(STDIN_FILENO, getpid()) == -1)
+    fprintf(stderr, "Could not execute fg\n");
+  else if(*back != 0)
+  {
+    tcsetpgrp(0, *back);
+    signal(SIGTTOU, SIG_DFL);
+    printf("%d running\n", *back);
+    waitpid(*back, &status, 0);
+    signal(SIGTTOU, SIG_IGN);
+    tcsetpgrp(0, getpid());
+    signal(SIGTTOU, SIG_DFL);
+    *back = 0;
+  }
+  else
+    printf("No background\n");
 
   return 0;
 }

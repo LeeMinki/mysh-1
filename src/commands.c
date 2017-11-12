@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <assert.h>
 #include <unistd.h>
 #include "commands.h"
@@ -53,7 +54,7 @@ char g_path[5][50] = {
   "/sbin/"
 };
 
-int evaluate_command(int n_commands, struct single_command (*commands)[512])
+int evaluate_command(int n_commands, struct single_command (*commands)[512], int* back)
 {
   struct single_command* com = (*commands);
 
@@ -62,26 +63,38 @@ int evaluate_command(int n_commands, struct single_command (*commands)[512])
   
   else if(n_commands == 1)
   {
-    do_single(com);
+    do_single(com, back);
     return 0;
   }
   else if(n_commands > 1)
   {
-    do_pipe(n_commands, com);
+    do_pipe(n_commands, com, back);
     return 0;
   }
 }
 
-void do_single(struct single_command (*com))
+int is_background(struct single_command(*com))
+{
+  if(strcmp(com->argv[com->argc-1], "&") == 0)
+  {
+    com->argv[com->argc-1] = '\0';
+    com->argc-=1;
+    return 1;
+  }
+  return -1;
+}
+void do_single(struct single_command (*com), int* back)
 {
   int status;
+  int is_back;
   assert(com->argc != 0); // com->argc is never 0! if so, exit.
+  is_back = is_background(com);
   int built_in_pos = is_built_in_command(com->argv[0]);
   if (built_in_pos != -1) 
     { // argv is cd or pwd or fg. -> 0, 1, 2
     if (built_in_commands[built_in_pos].command_validate(com->argc, com->argv)) 
       { // verifying
-        if (built_in_commands[built_in_pos].command_do(com->argc, com->argv) != 0) 
+        if (built_in_commands[built_in_pos].command_do(com->argc, com->argv, back) != 0) 
           { // if so, do! but if something errors occurs,
             fprintf(stderr, "%s: Error occurs\n", com->argv[0]);
           }
@@ -100,9 +113,27 @@ void do_single(struct single_command (*com))
     int ret = ch_path(com -> argv[0]);
     if(ret == 1)
     {
-      if(fork() == 0)
-        execv(com->argv[0], com->argv);
-      wait(&status);
+      if(is_back == 1)
+      {
+	      setpgid(0, 0);
+        tcsetpgrp(0, getpid());
+        int pid = fork();
+        *back = pid;
+        if(pid == 0)
+        {
+          setpgid(0, 0);
+          setpgid(0, getppid());
+          execv(com->argv[0], com->argv);
+          exit(-1);
+        }
+        printf("%d\n", *back);
+      }
+      else
+      {
+        if(fork() == 0)
+          execv(com->argv[0], com->argv);
+        wait(&status);
+      }
     }
     // There is nothing to do
     else 
@@ -159,18 +190,16 @@ int ch_path(char* commands)
     }
   }
 
-void do_pipe(int n_commands, struct single_command (*com))
+void do_pipe(int n_commands, struct single_command (*com), int* back)
 {
   int status;
   pthread_t tid;
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_create(&tid, &attr, server_thread, com);
- 
   
   if(fork() == 0)
   {
-    sleep(0.5);
     int client_socket;
     struct sockaddr_un server_addr;
     char buff[BUFF_SIZE+5];
@@ -178,26 +207,27 @@ void do_pipe(int n_commands, struct single_command (*com))
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sun_family  = AF_UNIX;
     strcpy(server_addr.sun_path, FILE_SERVER);
-    assert(-1 != connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)));
+    while(-1 == connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)));
     if (fork() == 0)
     {
       close(0);
       close(1);
       int ret = dup2(client_socket, 1);
       assert(ret > 0);
-      do_single(com);
+      do_single(com, back);
       exit(0);
     }
     wait(&status);
+    pthread_join(tid, NULL);
     close(client_socket);
     exit(0);
   }
   wait(&status);
-  pthread_join(tid, NULL);
 }
 
   void *server_thread(void *com)
   {
+    int back;
     struct single_command *com2 = (struct single_command *)com;
     int status;
     int server_socket;
@@ -229,7 +259,7 @@ void do_pipe(int n_commands, struct single_command (*com))
       {
         close(0);
         dup2(client_socket, 0);
-        do_single(com2+1);
+        do_single(com2+1, &back);
         exit(0);
       }
       wait(&status);

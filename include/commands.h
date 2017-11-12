@@ -7,11 +7,13 @@ struct single_command
   char** argv;
 };
 
-int evaluate_command(int n_commands, struct single_command (*commands)[512]);
+int evaluate_command(int n_commands, struct single_command (*commands)[512], int* back);
 
-void do_single(struct single_command (*com));
+void do_single(struct single_command (*com), int* back);
 
-void do_pipe(int n_commands, struct single_command (*com));
+void do_pipe(int n_commands, struct single_command (*com), int* back);
+
+int is_background(struct single_command(*com));
 
 void free_commands(int n_commands, struct single_command (*commands)[512]);
 

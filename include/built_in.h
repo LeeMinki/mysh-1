@@ -1,7 +1,7 @@
 #ifndef BUILT_IN_H_
 #define BUILT_IN_H_
 
-typedef int (*built_in_command_do)(int, char**);
+typedef int (*built_in_command_do)(int, char**, int*);
 typedef int (*built_in_command_validate)(int, char**);
 
 struct built_in_command
@@ -22,7 +22,7 @@ struct built_in_command
     If success, return 0.
     Else if arguments are not valid, return -1.
 */
-int do_cd(int argc, char** argv);
+int do_cd(int argc, char** argv, int* back);
 
 /**
   do_pwd(argc, argv)
@@ -35,9 +35,9 @@ int do_cd(int argc, char** argv);
     If success, return 0.
     Else if arguments are not valid, return -1.
 */
-int do_pwd(int argc, char** argv);
+int do_pwd(int argc, char** argv, int* back);
 
-int do_fg(int argc, char** argv);
+int do_fg(int argc, char** argv, int* back);
 
 /**
   validate_cd_argv(argc, argv)

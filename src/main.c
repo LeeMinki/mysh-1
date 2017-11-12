@@ -6,11 +6,11 @@
 #include "built_in.h"
 #include "utils.h"
 #include "signal_handlers.h"
-#include <setjmp.h>
 
 int main()
 {
-  
+ 
+  int back;
   char buf[8096];
   signal(SIGINT, catch_sigint);
   signal(SIGTSTP, catch_sigtstp);
@@ -22,12 +22,15 @@ int main()
     int n_commands = 0;
     mysh_parse_command(buf, &n_commands, &commands);
 
-    int ret = evaluate_command(n_commands, &commands);
+    int ret = evaluate_command(n_commands, &commands, &back);
 
     free_commands(n_commands, &commands);
     n_commands = 0;
 
-    if (ret == 1) {
+    if (ret == 1) 
+    {
+      if(back != 0)
+        kill(back, SIGKILL);
       break;
     }
   }
