@@ -1,3 +1,5 @@
+#define _POSIX_SOURCE
+#include "signal_handlers.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,18 +7,16 @@
 #include "commands.h"
 #include "built_in.h"
 #include "utils.h"
-#include "signal_handlers.h"
 
 int main()
 {
- 
+    signal(SIGTSTP, SIG_IGN); 
+  signal(SIGINT, SIG_IGN);
+
   int back;
   char buf[8096];
-  signal(SIGINT, catch_sigint);
-  signal(SIGTSTP, catch_sigtstp);
   
   while (1) {
-    
     fgets(buf, 8096, stdin);
     struct single_command commands[512];
     int n_commands = 0;
@@ -26,7 +26,7 @@ int main()
 
     free_commands(n_commands, &commands);
     n_commands = 0;
-
+    memset(buf, 0, sizeof(char) *8096);
     if (ret == 1) 
     {
       if(back != 0)

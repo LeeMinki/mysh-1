@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <assert.h>
 #include <unistd.h>
 #include "commands.h"
@@ -260,19 +259,13 @@ void do_pipe(int n_commands, struct single_command (*com), int* back)
         close(0);
         dup2(client_socket, 0);
         do_single(com2+1, &back);
-        exit(0);
+        close(server_socket);
+        close(client_socket);
+        exit(-1);
       }
       wait(&status);
+      close(server_socket);
       close(client_socket);
       pthread_exit(0);
     }
   }
-
-
-
-  
-
-
-
-
-

@@ -37,11 +37,10 @@ int do_fg(int argc, char** argv, int* back) {
   if (!validate_fg_argv(argc, argv))
     return -1;
 
-  signal(SIGTTOU, SIG_IGN);
-  if(tcsetpgrp(STDIN_FILENO, getpid()) == -1)
-    fprintf(stderr, "Could not execute fg\n");
-  else if(*back != 0)
+  
+  if(*back != 0)
   {
+    signal(SIGTTOU, SIG_IGN);
     tcsetpgrp(0, *back);
     signal(SIGTTOU, SIG_DFL);
     printf("%d running\n", *back);

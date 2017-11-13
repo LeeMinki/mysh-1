@@ -3,10 +3,9 @@
 
 void catch_sigint(int signalNo)
 {
-  signal(signalNo, SIG_IGN);
+  signal(SIGINT, SIG_IGN);
 }
-
 void catch_sigtstp(int signalNo)
 {
-  signal(signalNo, SIG_IGN);
+  signal(SIGTSTP, SIG_IGN);
 }
