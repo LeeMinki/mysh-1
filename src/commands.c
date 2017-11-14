@@ -1,3 +1,4 @@
+#define _POSIX_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <sys/un.h>
+
 
 
 #define  BUFF_SIZE   1024
@@ -130,8 +132,12 @@ void do_single(struct single_command (*com), int* back)
       else
       {
         if(fork() == 0)
+        {
+          kill(*back, SIGTSTP);
           execv(com->argv[0], com->argv);
+        }
         wait(&status);
+        signal(SIGTTOU, SIG_DFL);
       }
     }
     // There is nothing to do
